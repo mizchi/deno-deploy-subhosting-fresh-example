@@ -44,7 +44,7 @@ function DeployButton(
         });
         const data = await res.json();
         console.log(data);
-        location.href = `/deployment/${data.id}`;
+        location.reload();
       }}
     >
       deploy

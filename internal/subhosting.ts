@@ -10,13 +10,20 @@ async function _request(
   accessToken: string,
   data: object | undefined = undefined,
 ) {
-  const res = await fetch(API + pathname, {
+  const url = new URL(API + pathname);
+  if (method === "GET" && data) {
+    for (const [key, value] of Object.entries(data)) {
+      url.searchParams.set(key, value as string);
+    }
+  }
+  console.log("[request]", url.toString());
+  const res = await fetch(url, {
     method,
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: data ? JSON.stringify(data) : undefined,
+    body: method === "GET" ? undefined : JSON.stringify(data),
   });
   return res;
 }
@@ -32,19 +39,21 @@ async function _requestJson(
   );
 }
 
-type Asset = {
+export type Asset = {
   kind: string;
   content: string;
   encoding: string;
 };
 
-export type CreateDeploymentRequest = {
-  entryPointUrl: string;
-  assets: Record<string, Asset>;
-  envVars: Record<string, string>;
+export type Project = {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
-export type CreateDeploymentResponse = {
+export type Deployment = {
   id: string;
   projectId: string;
   description: string;
@@ -55,26 +64,30 @@ export type CreateDeploymentResponse = {
   updatedAt: string;
 };
 
-export type GetDeploymentDetailResponse = CreateDeploymentResponse;
-
-export type GetProjectDetailResponse = {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
+export type CreateDeploymentRequest = {
+  entryPointUrl: string;
+  assets: Record<string, Asset>;
+  envVars: Record<string, string>;
 };
+
+export type CreateDeploymentResponse = Deployment;
+export type GetDeploymentDetailResponse = Deployment;
+export type GetProjectDetailResponse = Project;
 
 type CreateProjectRequest = {
   name: string | null;
 };
-type CreateProjectResponse = {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
+type CreateProjectResponse = Project;
+
+type ListProjectsParams = {
+  page?: number;
+  limit?: number;
+  q?: string;
+  sort?: string;
+  order?: string;
+  organization_id?: string;
 };
+export type ListProjectsResponse = Project[];
 
 export async function createDeployment(
   projectId: string,
@@ -98,27 +111,47 @@ export async function getProjectDetail(
   );
 }
 
-export async function createProject(opts: {
-  accessToken: string;
-  orgId: string;
-}, body: CreateProjectRequest): Promise<CreateProjectResponse> {
-  // Create a new project
+export async function getProjectsInOrg(
+  params: ListProjectsParams = {},
+): Promise<ListProjectsResponse> {
+  const organizationId = params?.organization_id ?? DEPLOY_ORG_ID;
+  return await _requestJson(
+    "GET",
+    `/organizations/${organizationId}/projects`,
+    DEPLOY_ACCESS_TOKEN,
+    { ...params, organization_id: organizationId },
+  );
+}
+
+export async function getDeploymentsInProject(
+  projectId: string,
+): Promise<Deployment[]> {
+  return await _requestJson(
+    "GET",
+    `/projects/${projectId}/deployments`,
+    DEPLOY_ACCESS_TOKEN,
+    {},
+  );
+}
+
+export async function createProject(
+  body: CreateProjectRequest,
+): Promise<CreateProjectResponse> {
   return await _requestJson(
     "POST",
-    `/organizations/${opts.orgId}/projects`,
-    opts.accessToken,
+    `/organizations/${DEPLOY_ORG_ID}/projects`,
+    DEPLOY_ACCESS_TOKEN,
     body,
   );
 }
 
-export async function deleteProject(opts: {
-  accessToken: string;
-  projectId: string;
-}): Promise<number> {
+export async function deleteProject(
+  projectId: string,
+): Promise<number> {
   return await _request(
     "DELETE",
-    `/projects/${opts.projectId}`,
-    opts.accessToken,
+    `/projects/${projectId}`,
+    DEPLOY_ACCESS_TOKEN,
     {},
   )
     .then((res) => res.status);

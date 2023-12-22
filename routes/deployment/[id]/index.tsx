@@ -21,9 +21,6 @@ export default function ProjectDetailPage(props: PageProps<RootProps>) {
   const releasedUrl = firstDomain ? `https://${firstDomain}` : null;
   return (
     <>
-      <nav className="bg-gray-200">
-        <a href="/project/" className="text-blue-500">Home</a>
-      </nav>
       <div className="bg-white p-4">
         <h1 className="text-2xl font-bold">
           Deployment Detail: {props.params.id}

@@ -9,6 +9,7 @@ import * as $api_deploy from "./routes/api/deploy.ts";
 import * as $deployment_id_index from "./routes/deployment/[id]/index.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $project_projectId_index from "./routes/project/[projectId]/index.tsx";
+import * as $project_index from "./routes/project/index.tsx";
 import * as $DeployEditor from "./islands/DeployEditor.tsx";
 import { type Manifest } from "$fresh/server.ts";
 
@@ -21,6 +22,7 @@ const manifest = {
     "./routes/deployment/[id]/index.tsx": $deployment_id_index,
     "./routes/index.tsx": $index,
     "./routes/project/[projectId]/index.tsx": $project_projectId_index,
+    "./routes/project/index.tsx": $project_index,
   },
   islands: {
     "./islands/DeployEditor.tsx": $DeployEditor,
